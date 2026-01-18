@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import subprocess
 import threading
+import re
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("green")
 class HyperConnectApp(ctk.CTk):
@@ -25,11 +26,22 @@ class HyperConnectApp(ctk.CTk):
         self.btn_send=ctk.CTkButton(self,text="Send to phone",command=self.thread_send_text)
         self.btn_send.pack(pady=10)
 
+        #Button to check battery status
+        self.btn_check_battery=ctk.CTkButton(self,text="Check Battery Status",command=self.thread_check_battery)
+        self.btn_check_battery.pack(pady=10)
+
+        #Label to show battery status
+        self.battery_label=ctk.CTkLabel(self,text="Battery Status: N/A")
+        self.battery_label.pack(pady=10)
+
     def thread_check_adb(self):
         threading.Thread(target=self.check_adb).start()
 
     def thread_send_text(self):
         threading.Thread(target=self.send_text).start()
+
+    def thread_check_battery(self):
+        threading.Thread(target=self.check_battery).start()
 
     def check_adb(self):
         try:
@@ -46,6 +58,22 @@ class HyperConnectApp(ctk.CTk):
         clean=text.replace(" ","%s")
         subprocess.run(["adb","shell","input","text",clean])
         print(f"Sent:{text}")
+
+    def check_battery(self):
+        try:
+            result=subprocess.run(["adb","shell","dumpsys","battery"],capture_output=True,text=True)
+            output=result.stdout
+            level_match=re.search(r'level: (\d+)',output)
+            level=level_match.group(1) if level_match else "Unknown"
+            volt_match=re.search(r'voltage: (\d+)',output)
+            voltage="Unknown"
+            if volt_match:
+                voltage=f"{int(volt_match.group(1))/1000:.2f}V"
+            info = f"🔋 Battery: {level}% | ⚡ {voltage}"
+            print(info)
+            self.battery_label.configure(text=info,text_color="cyan")
+        except Exception as e:
+            print(f"Error {e}")
 
 if __name__=="__main__":
     app=HyperConnectApp()
