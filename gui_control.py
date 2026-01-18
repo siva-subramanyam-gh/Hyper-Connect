@@ -34,6 +34,18 @@ class HyperConnectApp(ctk.CTk):
         self.battery_label=ctk.CTkLabel(self,text="Battery Status: N/A")
         self.battery_label.pack(pady=10)
 
+        #Label to go Wireless Section
+        self.wireless_label=ctk.CTkLabel(self,text="---Wireless Mode---",text_color="cyan")
+        self.wireless_label.pack(pady=5)
+
+        #Input for IPv4 address
+        self.ip_text=ctk.CTkEntry(self,placeholder_text="Enter phone's IPv4 address here....")
+        self.ip_text.pack(pady=5)
+
+        #button to connect wirelessly
+        self.btn_wireless=ctk.CTkButton(self,text="Connect Wirelessly",command=self.thread_wireless_connect)
+        self.btn_wireless.pack(pady=10)
+
     def thread_check_adb(self):
         threading.Thread(target=self.check_adb).start()
 
@@ -42,6 +54,9 @@ class HyperConnectApp(ctk.CTk):
 
     def thread_check_battery(self):
         threading.Thread(target=self.check_battery).start()
+    
+    def thread_wireless_connect(self):
+        threading.Thread(target=self.wireless_connect).start()
 
     def check_adb(self):
         try:
@@ -70,10 +85,24 @@ class HyperConnectApp(ctk.CTk):
             if volt_match:
                 voltage=f"{int(volt_match.group(1))/1000:.2f}V"
             info = f"🔋 Battery: {level}% | ⚡ {voltage}"
-            print(info)
             self.battery_label.configure(text=info,text_color="cyan")
         except Exception as e:
             print(f"Error {e}")
+
+    def wireless_connect(self):
+        ip=self.ip_text.get()
+        if not ip:
+            self.status_label.configure(text="Enter valid IP address first!",text_color="red")
+            return
+        self.status_label.configure(text="Switching to TCP/IP....",text_color="orange")
+        subprocess.run(["adb","tcpip","5555"])
+        result=subprocess.run(["adb","connect",ip],capture_output=True,text=True)
+        if "connected to" in result.stdout:
+            self.status_label.configure(text="Connected Wirelessly!",text_color="green")
+            print(f"Success:{result.stdout}")
+        else:
+            self.status_label.configure(text="Connection Failed",text_color="red")
+            print(f"Failed:{result.stdout}")
 
 if __name__=="__main__":
     app=HyperConnectApp()
