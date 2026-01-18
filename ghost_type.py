@@ -1,3 +1,4 @@
+# Project: Control Shouji (Phone) via Diannao (Computer)
 import subprocess
 import sys
 def type_on_phone(text):
