@@ -14,10 +14,10 @@ def broadcast_presence():
     udp=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     udp.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1)
     print(f"---Broadcast Beacon Active via Port : {Broadcast_port}")
-    while true:
+    while True:
         message=f"Hyper Discover:{Data_port}"
         try:
-            udp.sendto(message.encode(),('<broadcast>',Broadcast_port))
+            udp.sendto(message.encode(), ('172.22.7.36', Broadcast_port))
             time.sleep(2)
         except Exception as e:
             print(f"Beacon error:{e}")
@@ -40,11 +40,14 @@ def handle_client(conn):
 def start_data_listener():
     tcp=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     tcp.bind(('0.0.0.0',Data_port))
+    tcp.listen()
     print(f"Data Listener Active on Port {Data_port}")
-    
-    while True:
-        conn, addr = tcp.accept()
-        threading.Thread(target=handle_client, args=(conn,)).start()
+    try:
+        while True:
+            conn, addr = tcp.accept()
+            threading.Thread(target=handle_client, args=(conn,)).start()
+    except Exception as e:
+        print(e)
 
 if __name__=="__main__":
     print("-----Hyper Connect Core-----")
